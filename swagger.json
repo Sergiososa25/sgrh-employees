@@ -1,0 +1,113 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API SGRH-Employees",
+    "version": "1.0.0",
+    "description": "Sistema de Gestión de Recursos Humanos con Node.js, Express y MySQL"
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Verificar estado del servidor y base de datos",
+        "responses": { "200": { "description": "Conexión exitosa" } }
+      }
+    },
+    "/api/dashboard/resumen": {
+      "get": {
+        "summary": "Obtener métricas generales del dashboard",
+        "responses": { "200": { "description": "Resumen de empleados e incidencias" } }
+      }
+    },
+    "/api/employees": {
+      "get": {
+        "summary": "Listar empleados con filtros y paginación",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "dept_no", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Lista paginada de empleados" } }
+      }
+    },
+    "/api/employees/{emp_no}/full": {
+      "get": {
+        "summary": "Obtener detalle completo de un empleado",
+        "parameters": [
+          { "name": "emp_no", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Datos del empleado" } }
+      }
+    },
+    "/api/employees/{id}/historial": {
+      "get": {
+        "summary": "Obtener historial de puestos y salarios de un empleado",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Historial completo" } }
+      }
+    },
+    "/api/departments": {
+      "get": {
+        "summary": "Listar todos los departamentos",
+        "responses": { "200": { "description": "Lista de departamentos" } }
+      }
+    },
+    "/api/departments/{dept_no}/employees": {
+      "get": {
+        "summary": "Listar empleados de un departamento específico",
+        "parameters": [
+          { "name": "dept_no", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Empleados del departamento" } }
+      }
+    },
+    "/api/incidencias": {
+      "get": {
+        "summary": "Listar incidencias de RRHH",
+        "responses": { "200": { "description": "Lista de incidencias" } }
+      },
+      "post": {
+        "summary": "Registrar una nueva incidencia",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emp_no": { "type": "integer", "example": 10001 },
+                  "tipo": { "type": "string", "example": "Observación" },
+                  "fecha": { "type": "string", "example": "2026-11-25" },
+                  "descripcion": { "type": "string", "example": "Nota de seguimiento" },
+                  "estatus": { "type": "string", "example": "Abierta" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Incidencia creada" } }
+      }
+    },
+    "/api/incidencias/{id}": {
+      "put": {
+        "summary": "Actualizar una incidencia existente",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Incidencia actualizada" } }
+      },
+      "delete": {
+        "summary": "Eliminar una incidencia",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Incidencia eliminada" } }
+      }
+    }
+  }
+}
