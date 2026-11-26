@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGRH-Employees | Gestión de Recursos Humanos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f4f6f9; }
+    .weather-widget {
+      background: #0d6efd;
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+    .clickable-row { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">SGRH-Employees</a>
+      <div class="d-flex align-items-center gap-3">
+        <div id="weather-widget" class="weather-widget text-end">
+          <div id="widget-date">Cargando fecha...</div>
+          <div id="widget-temp" class="fw-bold">Clima: --°C</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <!-- Pestañas de navegación -->
+    <ul class="nav nav-pills mb-4" id="mainTabs">
+      <li class="nav-item">
+        <button class="nav-link active" data-tab="dashboard" onclick="switchTab('dashboard', this)">Dashboard</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="employees" onclick="switchTab('employees', this)">Empleados</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="departments" onclick="switchTab('departments', this)">Departamentos</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="incidencias" onclick="switchTab('incidencias', this)">Incidencias RRHH</button>
+      </li>
+    </ul>
+
+    <!-- 1. DASHBOARD -->
+    <section id="tab-dashboard">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted small">Total de Empleados</div>
+              <h2 id="dash-total-emp" class="fw-bold mt-1">--</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold">Empleados Activos por Departamento</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Departamento</th>
+                      <th class="text-end">Empleados</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dash-dept-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white fw-bold">Incidencias Recientes</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Empleado</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Estatus</th>
+                  <th>Descripción</th>
+                </tr>
+              </thead>
+              <tbody id="dash-inc-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EMPLEADOS -->
+    <section id="tab-employees" class="d-none">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-5">
+              <input id="emp-search" type="text" class="form-control" placeholder="Buscar por nombre o apellido..." />
+            </div>
+            <div class="col-md-4">
+              <select id="emp-dept-filter" class="form-select">
+                <option value="">Todos los departamentos</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-grid">
+              <button class="btn btn-primary" onclick="loadEmployees(1)">Buscar / Filtrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Nombre</th>
+                  <th>Fecha Contratación</th>
+                  <th>Departamento Actual</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="emp-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+          <span id="emp-page-info" class="text-muted small">Página 1</span>
+          <div class="btn-group">
+            <button id="btn-prev-page" class="btn btn-outline-secondary btn-sm" onclick="changePage(-1)">Anterior</button>
+            <button id="btn-next-page" class="btn btn-outline-secondary btn-sm" onclick="changePage(1)">Siguiente</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. DEPARTAMENTOS -->
+    <section id="tab-departments" class="d-none">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold">Áreas / Departamentos</div>
+            <div class="list-group list-group-flush" id="dept-list"></div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold" id="dept-selected-title">Selecciona un departamento</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Nombre</th>
+                      <th>Desde</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dept-emp-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. INCIDENCIAS RRHH -->
+    <section id="tab-incidencias" class="d-none">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold" id="inc-form-title">Nueva Incidencia</div>
+            <div class="card-body">
+              <form id="inc-form" onsubmit="saveIncidencia(event)">
+                <input type="hidden" id="inc-id" />
+                <div class="mb-2">
+                  <label class="form-label">Número de Empleado (emp_no)</label>
+                  <input type="number" id="inc-emp-no" class="form-control" required placeholder="Ej. 10001" />
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Tipo</label>
+                  <input type="text" id="inc-tipo" class="form-control" required placeholder="Ej. Observación, Falta, Reconocimiento" />
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Fecha</label>
+                  <input type="date" id="inc-fecha" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Estatus</label>
+                  <select id="inc-estatus" class="form-select">
+                    <option value="Abierta">Abierta</option>
+                    <option value="En revisión">En revisión</option>
+                    <option value="Cerrada">Cerrada</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Descripción</label>
+                  <textarea id="inc-descripcion" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-success flex-grow-1">Guardar</button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="resetIncForm()">Limpiar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold">Listado de Incidencias</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Empleado</th>
+                      <th>Tipo</th>
+                      <th>Fecha</th>
+                      <th>Estatus</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inc-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Detalle + Historial -->
+  <div class="modal fade" id="employeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-emp-name">Detalle del Empleado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="modal-emp-body">Cargando...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let incidenciasCache = [];
+    const empModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+
+    function updateDateWidget() {
+      const now = new Date();
+      document.getElementById('widget-date').textContent = now.toLocaleDateString('es-MX', {
+        weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+      });
+    }
+
+    async function loadWeatherWidget() {
+      updateDateWidget();
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.7417&longitude=-100.3022&current_weather=true');
+        const data = await res.json();
+        if (data.current_weather) {
+          document.getElementById('widget-temp').textContent = `${data.current_weather.temperature}°C · San Nicolás`;
+        }
+      } catch {
+        document.getElementById('widget-temp').textContent = 'Clima no disponible';
+      }
+    }
+
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll('#mainTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      document.querySelectorAll('section[id^="tab-"]').forEach(s => s.classList.add('d-none'));
+      document.getElementById(`tab-${tabName}`).classList.remove('d-none');
+
+      if (tabName === 'dashboard') loadDashboard();
+      if (tabName === 'employees') loadEmployees(currentPage);
+      if (tabName === 'departments') loadDepartmentsTab();
+      if (tabName === 'incidencias') loadIncidencias();
+    }
+
+    async function loadDashboard() {
+      const res = await fetch('/api/dashboard/resumen');
+      const data = await res.json();
+      document.getElementById('dash-total-emp').textContent = Number(data.total_empleados).toLocaleString();
+
+      document.getElementById('dash-dept-body').innerHTML = data.empleados_por_departamento.map(d => `
+        <tr>
+          <td>${d.dept_no}</td>
+          <td>${d.dept_name}</td>
+          <td class="text-end">${Number(d.total_empleados).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('dash-inc-body').innerHTML = data.incidencias_recientes.length
+        ? data.incidencias_recientes.map(i => `
+          <tr>
+            <td>${i.id_incidencia}</td>
+            <td>${i.first_name} ${i.last_name} (#${i.emp_no})</td>
+            <td>${i.tipo}</td>
+            <td>${String(i.fecha).slice(0, 10)}</td>
+            <td><span class="badge bg-secondary">${i.estatus}</span></td>
+            <td>${i.descripcion}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="6" class="text-center text-muted py-3">Sin incidencias registradas</td></tr>';
+    }
+
+    async function populateDeptSelect() {
+      const res = await fetch('/api/departments');
+      const depts = await res.json();
+      const select = document.getElementById('emp-dept-filter');
+      select.innerHTML = '<option value="">Todos los departamentos</option>' +
+        depts.map(d => `<option value="${d.dept_no}">${d.dept_name} (${d.dept_no})</option>`).join('');
+    }
+
+    async function loadEmployees(page = 1) {
+      currentPage = page;
+      const search = document.getElementById('emp-search').value.trim();
+      const deptNo = document.getElementById('emp-dept-filter').value;
+      const params = new URLSearchParams({ page, limit: 10 });
+      if (search) params.set('search', search);
+      if (deptNo) params.set('dept_no', deptNo);
+
+      const res = await fetch(`/api/employees?${params.toString()}`);
+      const data = await res.json();
+      totalPages = data.totalPages || 1;
+
+      document.getElementById('emp-table-body').innerHTML = data.data.map(e => `
+        <tr>
+          <td>${e.emp_no}</td>
+          <td>${e.first_name} ${e.last_name}</td>
+          <td>${String(e.hire_date).slice(0, 10)}</td>
+          <td>${e.dept_name || '<span class="text-muted">Sin asignar</span>'}</td>
+          <td><button class="btn btn-sm btn-outline-primary" onclick="openEmployeeDetail(${e.emp_no})">Ver detalle</button></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('emp-page-info').textContent = `Página ${data.page} de ${totalPages} (${Number(data.total).toLocaleString()} registros)`;
+      document.getElementById('btn-prev-page').disabled = data.page <= 1;
+      document.getElementById('btn-next-page').disabled = data.page >= totalPages;
+    }
+
+    function changePage(delta) {
+      const next = currentPage + delta;
+      if (next >= 1 && next <= totalPages) loadEmployees(next);
+    }
+
+    async function openEmployeeDetail(empNo) {
+      document.getElementById('modal-emp-name').textContent = `Empleado #${empNo}`;
+      document.getElementById('modal-emp-body').innerHTML = 'Cargando información...';
+      empModal.show();
+
+      const [fullRes, histRes] = await Promise.all([
+        fetch(`/api/employees/${empNo}/full`),
+        fetch(`/api/employees/${empNo}/historial`)
+      ]);
+      const full = await fullRes.json();
+      const hist = await histRes.json();
+
+      document.getElementById('modal-emp-name').textContent = `${full.first_name} ${full.last_name} (#${full.emp_no})`;
+      document.getElementById('modal-emp-body').innerHTML = `
+        <p><strong>Departamento actual:</strong> ${full.current_department || 'N/A'} | <strong>Salario actual:</strong> ${full.current_salary ? '$' + Number(full.current_salary).toLocaleString() : 'N/A'}</p>
+        <p><strong>Contratación:</strong> ${String(full.hire_date).slice(0, 10)} | <strong>Género:</strong> ${full.gender}</p>
+        <h6 class="mt-3">Historial de Puestos (Titles)</h6>
+        <ul class="list-group mb-3">
+          ${hist.titles.map(t => `<li class="list-group-item d-flex justify-content-between"><span>${t.title}</span><small class="text-muted">${String(t.from_date).slice(0, 10)} → ${String(t.to_date).slice(0, 10)}</small></li>`).join('')}
+        </ul>
+        <h6>Historial de Salarios (Salaries)</h6>
+        <ul class="list-group">
+          ${hist.salaries.map(s => `<li class="list-group-item d-flex justify-content-between"><span>$${Number(s.salary).toLocaleString()}</span><small class="text-muted">${String(s.from_date).slice(0, 10)} → ${String(s.to_date).slice(0, 10)}</small></li>`).join('')}
+        </ul>
+      `;
+    }
+
+    async function loadDepartmentsTab() {
+      const res = await fetch('/api/departments');
+      const depts = await res.json();
+      document.getElementById('dept-list').innerHTML = depts.map(d => `
+        <button type="button" class="list-group-item list-group-item-action" onclick="loadDeptEmployees('${d.dept_no}', '${d.dept_name}')">
+          <strong>${d.dept_no}</strong> — ${d.dept_name}
+        </button>
+      `).join('');
+      if (depts.length) loadDeptEmployees(depts[0].dept_no, depts[0].dept_name);
+    }
+
+    async function loadDeptEmployees(deptNo, deptName) {
+      document.getElementById('dept-selected-title').textContent = `Empleados activos en ${deptName} (${deptNo})`;
+      const res = await fetch(`/api/departments/${deptNo}/employees?page=1&limit=15`);
+      const data = await res.json();
+      document.getElementById('dept-emp-body').innerHTML = data.data.map(e => `
+        <tr>
+          <td>${e.emp_no}</td>
+          <td>${e.first_name} ${e.last_name}</td>
+          <td>${String(e.from_date).slice(0, 10)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadIncidencias() {
+      const res = await fetch('/api/incidencias');
+      incidenciasCache = await res.json();
+      document.getElementById('inc-table-body').innerHTML = incidenciasCache.map(i => `
+        <tr>
+          <td>${i.id_incidencia}</td>
+          <td>${i.first_name} ${i.last_name} (#${i.emp_no})</td>
+          <td>${i.tipo}</td>
+          <td>${String(i.fecha).slice(0, 10)}</td>
+          <td><span class="badge bg-info text-dark">${i.estatus}</span></td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="editIncidencia(${i.id_incidencia})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteIncidencia(${i.id_incidencia})">Borrar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function editIncidencia(id) {
+      const inc = incidenciasCache.find(x => x.id_incidencia === id);
+      if (!inc) return;
+      document.getElementById('inc-form-title').textContent = `Editar Incidencia #${id}`;
+      document.getElementById('inc-id').value = inc.id_incidencia;
+      document.getElementById('inc-emp-no').value = inc.emp_no;
+      document.getElementById('inc-emp-no').disabled = true;
+      document.getElementById('inc-tipo').value = inc.tipo;
+      document.getElementById('inc-fecha').value = String(inc.fecha).slice(0, 10);
+      document.getElementById('inc-estatus').value = inc.estatus;
+      document.getElementById('inc-descripcion').value = inc.descripcion;
+    }
+
+    function resetIncForm() {
+      document.getElementById('inc-form-title').textContent = 'Nueva Incidencia';
+      document.getElementById('inc-form').reset();
+      document.getElementById('inc-id').value = '';
+      document.getElementById('inc-emp-no').disabled = false;
+    }
+
+    async function saveIncidencia(e) {
+      e.preventDefault();
+      const id = document.getElementById('inc-id').value;
+      const payload = {
+        emp_no: Number(document.getElementById('inc-emp-no').value),
+        tipo: document.getElementById('inc-tipo').value,
+        fecha: document.getElementById('inc-fecha').value,
+        estatus: document.getElementById('inc-estatus').value,
+        descripcion: document.getElementById('inc-descripcion').value
+      };
+
+      const url = id ? `/api/incidencias/${id}` : '/api/incidencias';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Error al guardar incidencia');
+        return;
+      }
+      resetIncForm();
+      loadIncidencias();
+    }
+
+    async function deleteIncidencia(id) {
+      if (!confirm(`¿Eliminar incidencia #${id}?`)) return;
+      await fetch(`/api/incidencias/${id}`, { method: 'DELETE' });
+      loadIncidencias();
+    }
+
+    loadWeatherWidget();
+    populateDeptSelect();
+    loadDashboard();
+  </script>
+</body>
+</html>
